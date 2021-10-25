@@ -7,6 +7,8 @@ l2.sort()
 print(l2)
 l1.sort()
 print(l1)
+stuff = s1.split()
+print(stuff)
 #l5 = []
 #for idx in range(len(l1)):
     #newval = l1[idx] + l2[idx]

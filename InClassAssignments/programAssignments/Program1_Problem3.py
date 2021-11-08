@@ -24,3 +24,62 @@
 # 31 - 1.
 # f) Return the integer as the final result.
 
+# definition function
+def myAtoi(s):
+    InString = ""
+    positiveNum = True
+
+    # checks to see if the input of the string is 0
+    if len(s) == 0:
+        return 0
+
+    i = 0
+    # ignore white spaces
+    while i < len(s):
+        if s[i] != " ":
+            break
+        i+=1
+    
+    if i < len(s):
+        # check for values 0-9
+        if ord('0') <= ord(s[i]) <= ord('9'):
+            InString += s[i]
+        # if sign is negative
+        elif s[i] == "-":
+            positiveNum = False
+        # if sign is positive
+        elif s[i] == "+":
+            pass
+        else:
+            return 0
+
+    i+=1
+
+    # run till end of loop
+    while i < len(s):
+        if ord('0') <= ord(s[i]) <= ord('9'):
+            InString += s[i]
+    
+        else:
+            break
+        i+=1
+
+    # checking for 32 bit conversion
+    if len(InString)==0:
+        return 0
+    else:
+        if positiveNum:
+            return min(int(InString), 2**31-1)
+        return max(-1*int(InString), -2**31)
+    
+try:
+    s = str(input("\nEnter some input: "))                                    
+    myAtoi(s)                     
+
+except:
+    print("Error, invalid data unable to process")                           
+
+
+print('Input:    "',s,'"',"\t\t",'OutPut:    ',myAtoi(s.lstrip()),'\n')     
+    
+

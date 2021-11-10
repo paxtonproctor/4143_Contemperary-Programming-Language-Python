@@ -1,0 +1,9 @@
+Student with the Highest grade in the class and congrats for being the smartest one in class  :  Eddy Sheen
+Highest grade in the class because someone was either a try hard or very lucky                :  97
+The Lowest Grade in the class because good god this grade is apparently low                   :  63
+Student with the Worst grade in the class and should probably drop out and live a better life :  Thomas BradyBunch
+The Class Average Was             :  82.50
+Total of freshmen students   : 3
+Total of Sophomores students : 0
+Total of Juniors students    : 1
+Total of Seniors students    : 1

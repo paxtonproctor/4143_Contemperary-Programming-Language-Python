@@ -37,7 +37,7 @@ def Dup(exp):
 
 if __name__ == '__main__':
     # ask user to insert expression
-    exp = str(input("Please Enter and expression you would like to test : "))
+    exp = str(input("Please Enter a expression : "))
     
     # if dup then print dup else not dup
     if Dup(exp):

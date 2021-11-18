@@ -75,8 +75,4 @@ stack.append(round(res,2))
 
 res = obj.next(streamEle4)
 stack.append(res)
-<<<<<<< HEAD
 print(stack)
-=======
-print(stack)
->>>>>>> e09460efc4d48070aba51e851a85ab3729671b70

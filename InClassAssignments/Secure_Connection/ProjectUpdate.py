@@ -17,79 +17,40 @@
 #       - If the computer connect to an open wifi, findCounter+=1
 #       - If the computer connect to wifi with same SSID but different BSSID, findCounter+=1
 #           If the findCounter > 2 then call alert function
+######################################################################################################################
+# Articles:  
+#   -   https://github.com/awkman/pywifi/blob/master/DOC.md
+#   -   https://programmerall.com/article/5941589508/
+#   -   https://chowdera.com/2021/04/20210405093620137c.html
+#    -   https://scapy.readthedocs.io/en/latest/
+# Tools:
+#   -   https://pypi.org/project/pywifi/
+#   -   https://manytools.org/hacker-tools/ascii-banner/
+#       Make the program runs
+######################################################################################################################
 import pywifi   
-import time     
-import tkinter	
-import scapy    # Take down the evil wifi by sending deautherize frames (optional or add it in the next version)
+import time   
+import sys
+import pystray  
+import tkinter as tk
+from tkinter import ttk
+from tkinter.messagebox import showinfo
+from tkinter import simpledialog
 from pywifi import const
-# Function for welcoming
-def welcome():
-    print('''
+from PIL import Image
+from pystray import Icon as icon, Menu as menu, MenuItem as item
 
-    ooooooooo.                                                  .    o8o                                  
-    `888   `Y88.                                              .o8    `"'                                  
-    888   .d88'  .oooo.   ooo. .oo.    .ooooo.  oo.ooooo.  .o888oo oooo   .ooooo.   .ooooo.  ooo. .oo.   
-    888ooo88P'  `P  )88b  `888P"Y88b  d88' `88b  888' `88b   888   `888  d88' `"Y8 d88' `88b `888P"Y88b  
-    888          .oP"888   888   888  888   888  888   888   888    888  888       888   888  888   888  
-    888         d8(  888   888   888  888   888  888   888   888 .  888  888   .o8 888   888  888   888  
-    o888o        `Y888""8o o888o o888o `Y8bod8P'  888bod8P'   "888" o888o `Y8bod8P' `Y8bod8P' o888o o888o 
-                                                 88                                                     
-                                                o888o				By Fowzy, Paxton
 
-    Description:    Tool protect you from twin evil attacks.
-    NOTES: 
-        - Program won't work if you do not enable monitor mode.
-        - Support: 🪟  Windows & 🐧 Linux.
 
-    ''')
-# Function will show the user the menu options
-def switcher():
-    print('''
-    0-	Enable monitor mode.
-    1-	Network card interface.
-    2-	Trusted list.
-    3-	Untrusted list.
-    4-	Kill Switch.
-    5-	VPN Connection.
-    6-	Notify.
-    ''')
-    option = int(input('Enter an option: '))
-    if(option ==0):
-        pass
-    if(option ==1):
-        pass
-    if(option ==2):
-        pass
-    if(option ==3):
-        pass
-    if(option ==4):
-        pass
-    if(option ==5):
-        pass
-    if(option ==6):
-        pass
-# Function lets the user choose the network card interface
-def chooseInterface(wifi):
-	# var. hold the value of the interface options
-	interfaceOption = int()
-	# Choosing interface. 0 is your default interface, its better to let the user choose the interface in case they have multiple interfaces
-	print('Interfaces options:')
-	for i in range(len(wifi.interfaces())):
-		print(f'{i} - {wifi.interfaces()[i].name()}')
-	print('3 - Default Interface')
-	interfaceOption = int(input('Choose interface: '))
-	if (interfaceOption == 3):
-		interfaceOption = 0
-	return interfaceOption
 # Function scan wifi
-def scan(interfaces):
+def scan():
     # interfaces = wifi.interfaces()[interfaceOption]
     # Calling a function that will start the scan
-    interfaces.scan()
+    interface.scan()
     # According to the documentation it is safer to call scan_results() 2 ~ 8 seconds later after calling scan().
     time.sleep(2)
     # Get the results of the previous scan. 
-    result = interfaces.scan_results()
+    result = interface.scan_results()
     # Print APs
     print('''
     
@@ -106,32 +67,48 @@ def scan(interfaces):
     	# we need ssid and bssid
     	print(f'{i.bssid}			{i.ssid}			{i.freq}			{i.auth}			{i.akm}			{i.signal}')
     return result
-# Function will make the user add new profile to our trusted list
-def addNew(interfaces):
-    profile = pywifi.Profile()
-    ssid = str(input('Enter the SSID of access point: '))
-    pwd = str(input('Enter the KEY of the access point: '))
-    bssid = str(input('Enter the BSSID of the access point: '))
-    profile.ssid = ssid
-    profile.auth = const.AUTH_ALG_OPEN
-    # profile.akm.append(const.AKM_TYPE_WPA2PSK) # 
-    # profile.cipher = const.CIPHER_TYPE_CCMP
-    profile.bssid = str(bssid)
-    profile.key = pwd
-    profile = interfaces.add_network_profile(profile)
-    print(f'{ssid} [{bssid}] added.')
-    connectOption=str(input('Do you want to connect to this access point right now? (y/n)'))
-    if connectOption == 'y' and interfaces.connect(profile):
-        print('Connected')
-    else:
-        breakpoint
-# Function will remove all the trusted APs
-def removeAPs(interfaces):
-    interfaces.remove_all_network_profiles()
-    return 'All profile has been removed.'
+
 # Function will keep the profile of the trusted profile
-def trustedAPs(interfaces):
-    profiles = interfaces.network_profiles()
+def trustedAPs():
+    #Create a pop window with trusted list title
+    ws = tk.Tk()
+    ws.title("Trusted List")
+    ws.geometry('400x200')
+    # define columns
+    columns = ('ssid', 'bssid')
+    # attach columns to the tkinter window
+    tree = ttk.Treeview(ws, columns=columns, show='headings')
+    # define headings
+    tree.heading('ssid', text='SSID')
+    tree.heading('bssid', text='BSSID')
+    ssid = simpledialog.askstring("SSID", "Please enter the SSID (wifi name):",
+                                    parent=ws)
+    if ssid is None:
+        ws.destroy()
+    bssid = simpledialog.askstring("BSSID", "Please enter the BSSID (Mac Address):",
+                                    parent=ws,)
+    if bssid is None:
+        ws.destroy()
+
+    # push informations into a tuple
+    trusted.append({
+        "ssid": ssid, "bssid" : bssid
+    })
+#    contacts.append((f'first {n}', f'last {n}', f'email{n}@example.com'))
+
+    for ap in trusted:
+        tree.insert('', tk.END, values=ap)
+    tree.grid(row=0, column=0, sticky='nsew')
+
+    # add a scrollbar
+    scrollbar = ttk.Scrollbar(ws, orient=tk.VERTICAL, command=tree.yview)
+    tree.configure(yscroll=scrollbar.set)
+    scrollbar.grid(row=0, column=1, sticky='ns')
+
+    # run the app
+    ws.mainloop()
+    
+    
     print('''
 
       88888 888b. 8    8 .d88b. 88888 8888 888b.    8    888 .d88b. 88888 
@@ -143,44 +120,78 @@ def trustedAPs(interfaces):
     print('-'*50)
     print(f'BSSID					SSID')
     print('-'*50)
-    for profile in profiles:
-        print(f'{profile.bssid}					{profile.ssid}')
-# Function will keep the profile of the bad network
-def untrustedAPs():
-	print('''
+    # double check that my secure aps are stored into the dicts
+    for i in trusted:
+        print(f'{i["ssid"]}\t{i["bssid"]}')
+    print(len(trusted))
+    print(type(trusted))
+    return trusted
 
-    8    8 8b  8 88888 888b. 8    8 .d88b. 88888 8888 888b.    8    888 .d88b. 88888 
-    8    8 8Ybm8   8   8  .8 8    8 YPwww.   8   8www 8   8    8     8  YPwww.   8   
-    8b..d8 8  "8   8   8wwK' 8b..d8     d8   8   8    8   8    8     8      d8   8   
-    `Y88P' 8   8   8   8  Yb `Y88P' `Y88P'   8   8888 888P'    8888 888 `Y88P'   8   
-                                                                                 
-    ''')
 # Function will check if my wifi got disconnected if yes then alert and enable the killswitch
-def stayConnected(interfaces):
-    if interfaces.status() == const.IFACE_CONNECTED:
-        return 'Connected'
-    elif interfaces.satus() == const.IFACE_DISCONNECTED:
-        return 'Disconnected'
-# Function is kill switch will basically disconnect you from your connection entirly  if it found you risky situiation
-def killSwitch(interfaces):
-	interfaces.disconnect()
-# Function send notification for the user
-def notify():
-	pass
-# Function will basically take down the bad wifi to protect other users (OPTIONAL)
-def takeDown():
-	pass
-# Function will discover attack and will make the action
-def discover():
-    pass
-# Main Function
-def main():
-    welcome()
-    # Get interface Information
-    wifi = pywifi.PyWiFi()
-    # Choosing interface
-    interfaces = wifi.interfaces()[chooseInterface(wifi)]
+def stayConnected():
+    if interface.status() == const.IFACE_CONNECTED:
+        return True
+    elif interface.satus() == const.IFACE_DISCONNECTED:
+        return False
 
-# calling the main function
-if __name__ == '__main__':                                                      
-        main()
+# Function is kill switch will basically disconnect you from your connection entirly  if it found you risky situiation
+def killSwitch():
+    on_activate(icon)
+    wifi = pywifi.PyWiFi() # make an object for the pywifi to start scanning
+    icon.notify("Your safe you got disconnected from the internet!")
+    interface = wifi.interfaces()[0] # use index 0 to obtain the Wi-Fi interface, according to the documentation
+    interface.disconnect()
+
+
+def on_activate(icon):
+    clicks.append(icon)
+    if len(clicks) == 5:
+        icon.stop()
+    else:
+        icon.icon = images[len(clicks) % len(images)]
+
+def enableMode():    
+    on_activate(icon) # switch icon
+    while True:
+        # run the scan every 300 seconds (5 minute)
+
+        print('\n')
+        for i in scan():
+            Scan_ssid = i.ssid
+            Scan_bssid = i.bssid
+            for x in trusted:
+                if str(Scan_ssid) ==str( x["ssid"]):
+                    print(Scan_bssid)
+                    print(x["ssid"])
+                    print("possible attack!")
+                    icon.notify("My man in danger! you better run kill switch or connect to a badass VPN!")
+            # print(f'{ssid}\t{bssid}')
+        time.sleep(300)
+        # for x in trusted:
+        #     print(len(trusted))
+
+# Exit function
+def exit():
+    sys.exit()
+
+# According to the documentation we have to make the icon visiable in order for our icons to works in all platforms 
+def setup(icon):
+    icon.visible = True
+
+# Our main program
+wifi = pywifi.PyWiFi() # make an object for the pywifi to start scanning
+interface = wifi.interfaces()[0] # use index 0 to obtain the Wi-Fi interface, according to the documentation
+trusted = [] # save my trusted aps into a dict 
+clicks = []
+# Running icon
+image1 = Image.open("c:/Users/Paxton/Python/InClassAssignments/Secure_Connection/disconnect.png")
+image2 = Image.open("c:/Users/Paxton/Python/InClassAssignments/Secure_Connection/connected.png")
+images = (image1, image2)
+menu = (
+    item('Enable security', enableMode),
+    item('Kill Switch',  killSwitch),
+    item('Trusted list', trustedAPs),
+    item('Quit',exit)
+    )
+icon = pystray.Icon("Secure Connection", images[0], "Secure Connection", menu)
+icon.run(setup)
